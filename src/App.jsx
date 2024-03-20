@@ -2,6 +2,14 @@ import { useState } from "react";
 import Player from "./components/Player.jsx";
 import GameBoard from "./components/GameBoard.jsx";
 import Log from "./components/Log.jsx";
+import { WINNING_COMBINATIONS } from "./winning_combinations.js";
+import GameOver from "./components/GameOver.jsx";
+
+const initialGameBoard = [
+  [null, null, null],
+  [null, null, null],
+  [null, null, null],
+];
 
 function deriveActivePlayer(turns) {
   let currentPlayer = "X";
@@ -14,6 +22,33 @@ function App() {
 
   let activePlayer = deriveActivePlayer(gameTurns);
 
+  let gameBoard = [...initialGameBoard.map((innerArray) => [...innerArray])];
+
+  for (const turn of gameTurns) {
+    gameBoard[turn.square.row][turn.square.col] = turn.player;
+  }
+
+  let winner;
+
+  for (const combination of WINNING_COMBINATIONS) {
+    const firstSquareSymbol =
+      gameBoard[combination[0].row][combination[0].column];
+    const secondSquareSymbol =
+      gameBoard[combination[1].row][combination[1].column];
+    const thirdSquareSymbol =
+      gameBoard[combination[2].row][combination[2].column];
+
+    if (
+      firstSquareSymbol &&
+      firstSquareSymbol === secondSquareSymbol &&
+      firstSquareSymbol === thirdSquareSymbol
+    ) {
+      winner = firstSquareSymbol;
+    }
+  }
+
+  let isDraw = gameTurns.length === 9 && !winner;
+
   function handleSelectSquare(rowIndex, colIndex) {
     setGameTurns((prevTurns) => {
       let currentPlayer = deriveActivePlayer(prevTurns);
@@ -25,6 +60,10 @@ function App() {
 
       return updatedTurns;
     });
+  }
+
+  function handleRestart() {
+    setGameTurns([]);
   }
 
   return (
@@ -42,7 +81,10 @@ function App() {
             isActive={activePlayer === "O"}
           />
         </ol>
-        <GameBoard onSelectSquare={handleSelectSquare} turns={gameTurns} />
+        {(isDraw || winner) && (
+          <GameOver winner={winner} restartMatch={handleRestart} />
+        )}
+        <GameBoard onSelectSquare={handleSelectSquare} board={gameBoard} />
       </div>
       <Log turns={gameTurns} />
     </main>
